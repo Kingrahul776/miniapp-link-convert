@@ -1,3 +1,4 @@
+
 from flask import Flask, request, redirect, jsonify
 
 app = Flask(__name__)
@@ -8,7 +9,7 @@ user_data = set()  # ✅ Store collected user IDs
 def home():
     return "Welcome to the Telegram Mini-App Redirector!"
 
-# ✅ Track user and redirect instantly
+# ✅ Store user and redirect instantly
 @app.route('/redirect')
 def redirect_to_telegram():
     user_id = request.args.get('user_id')
