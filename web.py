@@ -5,7 +5,7 @@ short_links = {}  # Stores short links in memory (use a database for production)
 
 @app.route('/')
 def home():
-    return "Welcome to the Telegram Mini-App Shortener!"
+    return "Welcome to KingCryptoCalls Telegram Mini-App Shortener!"
 
 # Store a new short link
 @app.route('/store', methods=['POST'])
