@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect
+from flask import Flask, request, jsonify
 import random
 import string
 import base64
@@ -6,11 +6,11 @@ from cryptography.fernet import Fernet
 
 app = Flask(__name__)
 
-# ✅ Generate a secret key for encryption (MUST STAY THE SAME ACROSS DEPLOYMENTS)
+# ✅ Generate and store an encryption key (DO NOT CHANGE AFTER DEPLOYMENT)
 SECRET_KEY = Fernet.generate_key()
 cipher = Fernet(SECRET_KEY)
 
-# ✅ Temporary storage for encrypted short links
+# ✅ Temporary storage for encrypted links
 short_links = {}
 
 # ✅ Generate a random short code
@@ -27,37 +27,34 @@ def decrypt_link(encrypted_data):
     decrypted_bytes = cipher.decrypt(base64.urlsafe_b64decode(encrypted_data))
     return decrypted_bytes.decode()
 
-# ✅ API to create a secure short link (Encrypts the private link)
-@app.route('/create_link', methods=['POST'])
-def create_short_link():
+# ✅ Store the encrypted link
+@app.route('/store_link', methods=['POST'])
+def store_link():
     data = request.json
     private_link = data.get("private_link")
 
     if not private_link:
         return jsonify({"success": False, "message": "Invalid request! No private link provided."}), 400
 
-    # ✅ Encrypt the private link
     encrypted_link = encrypt_link(private_link)
-
-    # ✅ Generate a unique short code
     short_code = generate_short_code()
     short_links[short_code] = encrypted_link
 
-    short_url = f"https://web-production-8fdb0.up.railway.app/{short_code}"
+    short_url = f"https://t.me/vipsignals221bot?start={short_code}"  # Redirect via Bot 2
+
     return jsonify({"success": True, "short_link": short_url})
 
-# ✅ Route to securely redirect without exposing the real link
-@app.route('/<short_code>')
-def redirect_to_private(short_code):
+# ✅ Retrieve and decrypt the stored private link for Bot 2
+@app.route('/get_link', methods=['GET'])
+def get_link():
+    short_code = request.args.get("short_code")
     encrypted_link = short_links.get(short_code)
 
     if not encrypted_link:
-        return "Invalid or expired link!", 404
+        return jsonify({"success": False, "message": "Invalid or expired link"}), 404
 
-    # ✅ Decrypt the link securely on the server
     decrypted_link = decrypt_link(encrypted_link)
-
-    return redirect(decrypted_link, code=302)  # ✅ Server-side redirection (NO LINK EXPOSURE)
+    return jsonify({"success": True, "private_link": decrypted_link})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
