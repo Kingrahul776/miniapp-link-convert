@@ -1,14 +1,13 @@
-from flask import Flask, request, jsonify, redirect
+from flask import Flask, request, render_template_string, jsonify
 import random
 import string
 import base64
-import json
 from cryptography.fernet import Fernet
 
 app = Flask(__name__)
 
-# ✅ Generate a secret key for encryption (Run once and save it securely)
-SECRET_KEY = Fernet.generate_key()
+# ✅ Secret Key for Encryption (Keep this the same across deployments)
+SECRET_KEY = Fernet.generate_key()  # ⚠️ SAVE THIS KEY SECURELY
 cipher = Fernet(SECRET_KEY)
 
 # ✅ Temporary storage for encrypted short links
@@ -47,16 +46,60 @@ def create_short_link():
     short_url = f"https://web-production-8fdb0.up.railway.app/{short_code}"
     return jsonify({"success": True, "short_link": short_url})
 
-# ✅ Redirect short link to original private invite link (Decrypts it before redirecting)
-@app.route('/<short_code>')
-def redirect_to_private(short_code):
-    encrypted_link = short_links.get(short_code)
+# ✅ Hide the redirection link using JavaScript
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <script>
+        function redirectToPrivateLink() {
+            fetch('/get_private_link?code={{ short_code }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = data.private_link;  // ✅ Redirect using JavaScript
+                    } else {
+                        document.getElementById("status").innerText = "Invalid or Expired Link!";
+                    }
+                })
+                .catch(() => {
+                    document.getElementById("status").innerText = "Error occurred!";
+                });
+        }
+        window.onload = redirectToPrivateLink;
+    </script>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; padding: 50px; }
+        h1 { color: #007bff; }
+        #status { font-size: 18px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Redirecting...</h1>
+    <p id="status">Please wait...</p>
+</body>
+</html>
+"""
 
+# ✅ Route to retrieve the decrypted private link
+@app.route('/get_private_link')
+def get_private_link():
+    short_code = request.args.get('code')
+
+    encrypted_link = short_links.get(short_code)
     if not encrypted_link:
-        return "Invalid or expired link!", 404
+        return jsonify({"success": False, "message": "Invalid or expired link"}), 404
 
     decrypted_link = decrypt_link(encrypted_link)
-    return redirect(decrypted_link)
+    return jsonify({"success": True, "private_link": decrypted_link})
+
+# ✅ Route to display the intermediate redirect page (Prevents showing real link in address bar)
+@app.route('/<short_code>')
+def redirect_to_private(short_code):
+    return render_template_string(HTML_TEMPLATE, short_code=short_code)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
