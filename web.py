@@ -1,31 +1,26 @@
 from flask import Flask, request, redirect, jsonify
 
 app = Flask(__name__)
-short_links = {}  # Stores short links in memory (use a database for production)
+CHANNEL_LINK = "https://t.me/+foDsQEgRiEU3N2E1"  # 🔹 Replace with your actual channel invite link
+user_data = set()  # ✅ Store collected user IDs
 
 @app.route('/')
 def home():
-    return "Welcome to KingCryptoCalls Telegram Mini-App Shortener!"
+    return "Welcome to the Telegram Mini-App Redirector!"
 
-# Store a new short link
-@app.route('/store', methods=['POST'])
-def store_link():
-    data = request.json
-    short_code = data.get("code")
-    target_url = data.get("target")
+# ✅ Track user and redirect instantly
+@app.route('/redirect')
+def redirect_to_telegram():
+    user_id = request.args.get('user_id')
+    if user_id:
+        user_data.add(user_id)  # ✅ Store user ID for future broadcasts
+        return redirect(CHANNEL_LINK)
+    return "Invalid request!", 400
 
-    if short_code and target_url:
-        short_links[short_code] = target_url
-        return jsonify({"message": "Short link stored!"}), 200
-    return jsonify({"error": "Invalid data"}), 400
-
-# Redirect from short link to Telegram
-@app.route('/<short_code>')
-def redirect_link(short_code):
-    target_url = short_links.get(short_code)
-    if target_url:
-        return redirect(target_url)
-    return "Invalid link!", 404
+# ✅ Get stored user IDs for broadcasting
+@app.route('/get_users')
+def get_users():
+    return jsonify(list(user_data))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
