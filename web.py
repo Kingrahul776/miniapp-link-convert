@@ -1,53 +1,62 @@
-from flask import Flask, request, render_template_string, jsonify
+from flask import Flask, request, jsonify, redirect
+import random
+import string
+import base64
+import json
+from cryptography.fernet import Fernet
 
 app = Flask(__name__)
-CHANNEL_LINK = "https://t.me/+foDsQEgRiEU3N2E1"  # 🔹 Replace with your actual channel invite link
-user_data = {}  # ✅ Store collected user IDs
 
-# ✅ Mini-App HTML with Auto-Redirect to Telegram Channel
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting...</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script>
-        function openChannel() {
-            Telegram.WebApp.openTelegramLink("{{ channel_link }}"); // ✅ Opens the channel inside Telegram
-            setTimeout(() => Telegram.WebApp.close(), 2000); // ✅ Closes Mini-App after redirecting
-        }
-        window.onload = openChannel;  // ✅ Auto-redirect when the Mini-App opens
-    </script>
-    <style>
-        body { text-align: center; font-family: Arial, sans-serif; padding: 50px; }
-        h1 { color: #007bff; }
-    </style>
-</head>
-<body>
-    <h1>Redirecting you to the channel...</h1>
-</body>
-</html>
-"""
+# ✅ Generate a secret key for encryption (Run once and save it securely)
+SECRET_KEY = Fernet.generate_key()
+cipher = Fernet(SECRET_KEY)
 
-@app.route('/')
-def home():
-    return "Welcome to the Telegram Mini-App Redirector!"
+# ✅ Temporary storage for encrypted short links
+short_links = {}
 
-# ✅ Store user ID and open the channel inside Telegram
-@app.route('/redirect')
-def redirect_to_telegram():
-    user_id = request.args.get('user_id')
-    if user_id:
-        user_data[user_id] = "Joined"
-        return render_template_string(HTML_TEMPLATE, channel_link=CHANNEL_LINK)
-    return "Invalid request!", 400
+# ✅ Generate a random short code
+def generate_short_code(length=6):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-# ✅ Get stored user IDs for broadcasting
-@app.route('/get_users')
-def get_users():
-    return jsonify(list(user_data.keys()))
+# ✅ Encrypt the private link
+def encrypt_link(private_link):
+    encrypted_bytes = cipher.encrypt(private_link.encode())
+    return base64.urlsafe_b64encode(encrypted_bytes).decode()
+
+# ✅ Decrypt the private link
+def decrypt_link(encrypted_data):
+    decrypted_bytes = cipher.decrypt(base64.urlsafe_b64decode(encrypted_data))
+    return decrypted_bytes.decode()
+
+# ✅ API to create a short link (Encrypts the private link)
+@app.route('/create_link', methods=['POST'])
+def create_short_link():
+    data = request.json
+    private_link = data.get("private_link")
+
+    if not private_link:
+        return jsonify({"success": False, "message": "Invalid request! No private link provided."}), 400
+
+    # ✅ Encrypt the private link
+    encrypted_link = encrypt_link(private_link)
+
+    # ✅ Generate a unique short code
+    short_code = generate_short_code()
+    short_links[short_code] = encrypted_link
+
+    short_url = f"https://web-production-8fdb0.up.railway.app/{short_code}"
+    return jsonify({"success": True, "short_link": short_url})
+
+# ✅ Redirect short link to original private invite link (Decrypts it before redirecting)
+@app.route('/<short_code>')
+def redirect_to_private(short_code):
+    encrypted_link = short_links.get(short_code)
+
+    if not encrypted_link:
+        return "Invalid or expired link!", 404
+
+    decrypted_link = decrypt_link(encrypted_link)
+    return redirect(decrypted_link)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
