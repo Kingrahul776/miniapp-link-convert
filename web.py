@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string, jsonify
+from flask import Flask, request, jsonify, redirect
 import random
 import string
 import base64
@@ -6,8 +6,8 @@ from cryptography.fernet import Fernet
 
 app = Flask(__name__)
 
-# ✅ Secret Key for Encryption (MUST STAY THE SAME)
-SECRET_KEY = Fernet.generate_key()  # ⚠️ SAVE THIS KEY SAFELY
+# ✅ Generate a secret key for encryption (MUST STAY THE SAME ACROSS DEPLOYMENTS)
+SECRET_KEY = Fernet.generate_key()
 cipher = Fernet(SECRET_KEY)
 
 # ✅ Temporary storage for encrypted short links
@@ -27,7 +27,7 @@ def decrypt_link(encrypted_data):
     decrypted_bytes = cipher.decrypt(base64.urlsafe_b64decode(encrypted_data))
     return decrypted_bytes.decode()
 
-# ✅ API to create a secure short link
+# ✅ API to create a secure short link (Encrypts the private link)
 @app.route('/create_link', methods=['POST'])
 def create_short_link():
     data = request.json
@@ -46,55 +46,18 @@ def create_short_link():
     short_url = f"https://web-production-8fdb0.up.railway.app/{short_code}"
     return jsonify({"success": True, "short_link": short_url})
 
-# ✅ Secure Redirect Page (Hides Link in JavaScript)
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting...</title>
-    <script>
-        function decryptAndRedirect() {
-            let encryptedData = atob("{{ encrypted_link }}");  // Decode base64
-            let key = atob("{{ secret_key }}");  // Decode the encryption key
-
-            async function decrypt(encryptedText, key) {
-                const encoder = new TextEncoder();
-                const data = encoder.encode(encryptedText);
-                const keyData = encoder.encode(key);
-                
-                // Fake decryption simulation - redirecting with a delay
-                let decryptedText = atob(encryptedText);
-                return decryptedText;
-            }
-
-            decrypt(encryptedData, key).then(privateLink => {
-                setTimeout(() => { window.location.href = privateLink; }, 1000);
-            });
-        }
-
-        window.onload = decryptAndRedirect;
-    </script>
-    <style>
-        body { text-align: center; font-family: Arial, sans-serif; padding: 50px; }
-        h1 { color: #007bff; }
-    </style>
-</head>
-<body>
-    <h1>Redirecting...</h1>
-</body>
-</html>
-"""
-
-# ✅ Route to display the encrypted redirect page
+# ✅ Route to securely redirect without exposing the real link
 @app.route('/<short_code>')
 def redirect_to_private(short_code):
     encrypted_link = short_links.get(short_code)
+
     if not encrypted_link:
         return "Invalid or expired link!", 404
 
-    return render_template_string(HTML_TEMPLATE, encrypted_link=base64.b64encode(encrypted_link.encode()).decode(), secret_key=base64.b64encode(SECRET_KEY).decode())
+    # ✅ Decrypt the link securely on the server
+    decrypted_link = decrypt_link(encrypted_link)
+
+    return redirect(decrypted_link, code=302)  # ✅ Server-side redirection (NO LINK EXPOSURE)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
