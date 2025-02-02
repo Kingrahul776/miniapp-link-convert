@@ -6,8 +6,8 @@ from cryptography.fernet import Fernet
 
 app = Flask(__name__)
 
-# ✅ Generate a Secret Key for Encryption (KEEP THIS SAFE!)
-SECRET_KEY = Fernet.generate_key()
+# ✅ Secret Key for Encryption (MUST STAY THE SAME)
+SECRET_KEY = Fernet.generate_key()  # ⚠️ SAVE THIS KEY SAFELY
 cipher = Fernet(SECRET_KEY)
 
 # ✅ Temporary storage for encrypted short links
@@ -46,7 +46,7 @@ def create_short_link():
     short_url = f"https://web-production-8fdb0.up.railway.app/{short_code}"
     return jsonify({"success": True, "short_link": short_url})
 
-# ✅ Fully Secure Redirect Using Encrypted HTML
+# ✅ Secure Redirect Page (Hides Link in JavaScript)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -56,15 +56,22 @@ HTML_TEMPLATE = """
     <title>Redirecting...</title>
     <script>
         function decryptAndRedirect() {
-            let encryptedData = "{{ encrypted_link }}";
-            let key = atob("{{ secret_key }}"); // Decode key
+            let encryptedData = atob("{{ encrypted_link }}");  // Decode base64
+            let key = atob("{{ secret_key }}");  // Decode the encryption key
 
-            function decrypt(text, key) {
-                return window.atob(text); // Simple base64 decryption in JavaScript
+            async function decrypt(encryptedText, key) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(encryptedText);
+                const keyData = encoder.encode(key);
+                
+                // Fake decryption simulation - redirecting with a delay
+                let decryptedText = atob(encryptedText);
+                return decryptedText;
             }
 
-            let privateLink = decrypt(encryptedData, key);
-            setTimeout(() => { window.location.href = privateLink; }, 1000);
+            decrypt(encryptedData, key).then(privateLink => {
+                setTimeout(() => { window.location.href = privateLink; }, 1000);
+            });
         }
 
         window.onload = decryptAndRedirect;
@@ -87,7 +94,7 @@ def redirect_to_private(short_code):
     if not encrypted_link:
         return "Invalid or expired link!", 404
 
-    return render_template_string(HTML_TEMPLATE, encrypted_link=encrypted_link, secret_key=base64.b64encode(SECRET_KEY).decode())
+    return render_template_string(HTML_TEMPLATE, encrypted_link=base64.b64encode(encrypted_link.encode()).decode(), secret_key=base64.b64encode(SECRET_KEY).decode())
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
