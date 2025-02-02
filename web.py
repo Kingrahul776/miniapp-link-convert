@@ -4,7 +4,7 @@ app = Flask(__name__)
 CHANNEL_LINK = "https://t.me/+foDsQEgRiEU3N2E1"  # 🔹 Replace with your actual channel invite link
 user_data = {}  # ✅ Store collected user IDs
 
-# ✅ Mini-App HTML that redirects inside Telegram
+# ✅ Mini-App HTML with Auto-Redirect to Telegram Channel
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -15,8 +15,8 @@ HTML_TEMPLATE = """
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         function openChannel() {
-            Telegram.WebApp.openTelegramLink("{{ channel_link }}");
-            Telegram.WebApp.close(); // ✅ Closes the Mini-App after opening the channel
+            Telegram.WebApp.openTelegramLink("{{ channel_link }}"); // ✅ Opens the channel inside Telegram
+            setTimeout(() => Telegram.WebApp.close(), 2000); // ✅ Closes Mini-App after redirecting
         }
         window.onload = openChannel;  // ✅ Auto-redirect when the Mini-App opens
     </script>
