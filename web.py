@@ -1,34 +1,32 @@
-from flask import Flask, request, render_template_string, jsonify, redirect
+from flask import Flask, request, render_template_string, jsonify
 
 app = Flask(__name__)
 CHANNEL_LINK = "https://t.me/+foDsQEgRiEU3N2E1"  # 🔹 Replace with your actual channel invite link
 user_data = {}  # ✅ Store collected user IDs
 
-# ✅ Telegram Mini-App WebPage with Redirect Button
+# ✅ Mini-App HTML with Auto-Redirect to Telegram Channel
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join Our Channel</title>
+    <title>Redirecting...</title>
     <script>
-        function redirectToTelegram() {
-            window.location.href = "{{ channel_link }}";
+        function openChannel() {
+            Telegram.WebApp.openTelegramLink("{{ channel_link }}");
         }
-        setTimeout(redirectToTelegram, 3000);  // ✅ Auto-redirect after 3 seconds
+        setTimeout(openChannel, 1000);  // ✅ Auto-redirect after 1 second
     </script>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; padding: 50px; }
         h1 { color: #007bff; }
         .btn { background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; font-size: 18px; border-radius: 5px; }
-        #status { font-size: 16px; margin-bottom: 10px; color: green; }
     </style>
 </head>
 <body>
-    <h1>Welcome to Our Community!</h1>
-    <p id="status">Redirecting you to the Telegram channel...</p>
-    <p>If you are not redirected, <a class="btn" href="{{ channel_link }}">Click Here</a></p>
+    <h1>Redirecting...</h1>
+    <p>If you are not redirected automatically, <a class="btn" onclick="openChannel()">Click Here</a></p>
 </body>
 </html>
 """
@@ -37,7 +35,7 @@ HTML_TEMPLATE = """
 def home():
     return "Welcome to the Telegram Mini-App Redirector!"
 
-# ✅ Store user ID and show the join button
+# ✅ Store user ID and open the channel inside Telegram
 @app.route('/redirect')
 def redirect_to_telegram():
     user_id = request.args.get('user_id')
