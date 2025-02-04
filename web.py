@@ -31,8 +31,25 @@ def store_link():
     data = request.get_json()
     user_id = str(data.get("user_id"))
 
-    if user_id != "6142725643" and (user_id not in subscriptions or subscriptions[user_id] < datetime.datetime.utcnow()):
+    # ✅ Check if user has an active subscription
+    if user_id not in subscriptions or subscriptions[user_id] < datetime.datetime.utcnow():
         return jsonify({"message": "User does not have an active subscription!", "success": False}), 403
+
+    private_link = data.get("private_link")
+    if not private_link:
+        return jsonify({"message": "Invalid private link!", "success": False}), 400
+
+    # ✅ Generate encrypted token
+    token = jwt.encode({"link": private_link}, SECRET_KEY, algorithm="HS256")
+
+    # ✅ Create Mini-App Link instead of just start command
+    short_link = f"https://t.me/vipsignals221bot/start?startapp={token}"
+    
+    # ✅ Store token-link mapping
+    links[token] = private_link
+
+    return jsonify({"short_link": short_link, "success": True}), 200
+
         
 @app.route("/grant_access", methods=["POST"])
 def grant_access():
