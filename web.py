@@ -40,8 +40,12 @@ def store_link():
     user_id = str(data.get("user_id"))
     
     # Check Subscription
-    if user_id not in subscriptions or subscriptions[user_id] < datetime.datetime.utcnow():
-        return jsonify({"message": "User does not have an active subscription!", "success": False}), 403
+   # ✅ Always allow the admin to generate links
+if user_id == "6142725643" or user_id in subscriptions and subscriptions[user_id] > datetime.datetime.utcnow():
+    pass  # ✅ Admin bypass & user has a valid subscription
+else:
+    return jsonify({"message": "User does not have an active subscription!", "success": False}), 403
+
 
     private_link = data.get("private_link")
     token = jwt.encode({"link": private_link}, SECRET_KEY, algorithm="HS256")
