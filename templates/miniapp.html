@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grant Permission</title>
+    <script>
+        function grantPermission() {
+            // Redirect user to Bot 2 with the start parameter
+            const bot2Link = `https://t.me/{{ bot2_username }}?start={{ start_param }}`;
+            window.location.href = bot2Link;
+        }
+    </script>
+</head>
+<body>
+    <h2>Grant Permission</h2>
+    <p>Click the button below to grant permission to receive messages.</p>
+    <button onclick="grantPermission()">Grant Permission</button>
+</body>
+</html>
