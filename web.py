@@ -4,12 +4,15 @@ import datetime
 
 app = Flask(__name__)
 
-# Secret key for encryption
+# ✅ Secret key for encryption
 SECRET_KEY = "supersecret"
 
-# In-memory storage for demo (Replace with Database)
+# ✅ In-memory storage (Replace with Database)
 subscriptions = {}
 links = {}
+
+# ✅ Admin User ID (Permanent Subscription)
+ADMIN_ID = "6142725643"
 
 @app.route("/", methods=["GET"])
 def home():
@@ -23,20 +26,29 @@ def health():
 def add_subscription():
     data = request.get_json()
     user_id = str(data.get("user_id"))
+
+    # ✅ If admin user (6142725643), give permanent access
+    if user_id == ADMIN_ID:
+        subscriptions[user_id] = "PERMANENT"
+        return jsonify({"message": f"Admin {user_id} has a permanent subscription.", "success": True}), 200
+
+    # ✅ For regular users, set subscription expiry
     days = int(data.get("days", 30))
-    
     expiry_date = datetime.datetime.utcnow() + datetime.timedelta(days=days)
     subscriptions[user_id] = expiry_date
-    
-    return jsonify({"message": f"Subscription added for {user_id} until {expiry_date}.", "success": True}), 200
+
+    return jsonify({
+        "message": f"Subscription added for {user_id} until {expiry_date}.",
+        "success": True
+    }), 200
 
 @app.route("/store_link", methods=["POST"])
 def store_link():
     data = request.get_json()
     user_id = str(data.get("user_id"))
-    
-    # Check Subscription
-    if user_id not in subscriptions or subscriptions[user_id] < datetime.datetime.utcnow():
+
+    # ✅ Check Subscription (Admins have permanent access)
+    if user_id != ADMIN_ID and (user_id not in subscriptions or subscriptions[user_id] < datetime.datetime.utcnow()):
         return jsonify({"message": "User does not have an active subscription!", "success": False}), 403
 
     private_link = data.get("private_link")
