@@ -3,18 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grant Permission</title>
-    <script>
-        function grantPermission() {
-            // Redirect user to Bot 2 with the start parameter
-            const bot2Link = `https://t.me/{{ bot2_username }}?start={{ start_param }}`;
-            window.location.href = bot2Link;
-        }
-    </script>
+    <title>Mini App - Grant Permission</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        .container { margin-top: 50px; }
+        button { background: #0088cc; color: white; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; }
+    </style>
 </head>
 <body>
-    <h2>Grant Permission</h2>
-    <p>Click the button below to grant permission to receive messages.</p>
-    <button onclick="grantPermission()">Grant Permission</button>
+    <div class="container">
+        <h2>Grant Permission</h2>
+        <p>Click below to allow the bot to send you messages.</p>
+        <button onclick="grantPermission()">✅ Allow Access</button>
+    </div>
+
+    <script>
+        function grantPermission() {
+            let user = Telegram.WebApp.initDataUnsafe.user;
+            if (!user) {
+                alert("❌ Failed to get user info.");
+                return;
+            }
+
+            fetch("https://kingcryptocalls.com/grant_access", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id: user.id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("✅ Permission granted! Redirecting...");
+                    window.location.href = data.redirect_to;
+                } else {
+                    alert("❌ Error: " + data.message);
+                }
+            })
+            .catch(err => alert("❌ Network error."));
+        }
+    </script>
 </body>
 </html>
