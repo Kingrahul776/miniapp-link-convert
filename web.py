@@ -19,12 +19,19 @@ def health():
 def add_subscription():
     data = request.get_json()
     user_id = str(data.get("user_id"))
+
+    # ✅ If user is the admin, give unlimited subscription
+    if user_id == "6142725643":
+        subscriptions[user_id] = datetime.datetime.max  # Never expires
+        return jsonify({"message": "Admin access granted!", "success": True}), 200
+
+    # ✅ Otherwise, grant normal subscription
     days = int(data.get("days", 30))
-    
     expiry_date = datetime.datetime.utcnow() + datetime.timedelta(days=days)
     subscriptions[user_id] = expiry_date
-    
+
     return jsonify({"message": f"Subscription added for {user_id} until {expiry_date}.", "success": True}), 200
+
 
 @app.route("/store_link", methods=["POST"])
 def store_link():
