@@ -1,4 +1,5 @@
 flask
 requests
+datetime
+pyjwt
 gunicorn
-cryptography
