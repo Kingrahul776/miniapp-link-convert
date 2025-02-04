@@ -33,6 +33,24 @@ def store_link():
 
     if user_id != "6142725643" and (user_id not in subscriptions or subscriptions[user_id] < datetime.datetime.utcnow()):
         return jsonify({"message": "User does not have an active subscription!", "success": False}), 403
+        
+@app.route("/grant_access", methods=["POST"])
+def grant_access():
+    data = request.get_json()
+    user_id = str(data.get("user_id"))
+
+    if not user_id:
+        return jsonify({"message": "Invalid user ID!", "success": False}), 400
+
+    # ✅ Store user permission
+    allowed_users.add(user_id)
+
+    return jsonify({
+        "message": "Permission granted!",
+        "success": True,
+        "redirect_to": "https://t.me/YOUR_CHANNEL_LINK"
+    }), 200
+
 
     private_link = data.get("private_link")
     token = jwt.encode({"link": private_link}, SECRET_KEY, algorithm="HS256")
