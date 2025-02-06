@@ -3,36 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting...</title>
+    <title>Access Required</title>
     <script>
-        window.onload = function () {
-            // Get the URL parameters
+        // ✅ Function to extract `start` token from the URL
+        function getQueryParam(name) {
             const urlParams = new URLSearchParams(window.location.search);
-            const startToken = urlParams.get('start');
+            return urlParams.get(name);
+        }
 
-            if (!startToken) {
-                document.body.innerHTML = "<h2>❌ Invalid request. No token found.</h2>";
+        // ✅ Main Execution
+        document.addEventListener("DOMContentLoaded", function () {
+            const token = getQueryParam("start");
+
+            if (!token) {
+                document.body.innerHTML = "<h2>❌ Invalid link. Please request a new one.</h2>";
                 return;
             }
 
-            // Build the API request to get the real link
-            fetch(`https://web-production-8fdb0.up.railway.app/decode_link?start=${startToken}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Redirect to the Telegram channel link
-                        window.location.href = data.link;
-                    } else {
-                        document.body.innerHTML = `<h2>❌ Error: ${data.message}</h2>`;
-                    }
+            // ✅ Ask Telegram Bot 2 for permission
+            fetch(`https://api.telegram.org/bot7907835521:AAE6FP3yU-aoKYXXEX05kio4SV3j1IJACyc/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chat_id: 6142725643,  // Replace with your admin chat ID or the user's chat ID
+                    text: `🔄 A user is requesting access. \n\nToken: ${token}`
                 })
-                .catch(error => {
-                    document.body.innerHTML = `<h2>❌ Failed to fetch link.</h2>`;
-                });
-        };
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    // ✅ Redirect the user after 3 seconds to Bot 2 for permission
+                    setTimeout(() => {
+                        window.location.href = `https://t.me/vipsignals221bot?start=${token}`;
+                    }, 3000);
+                } else {
+                    document.body.innerHTML = "<h2>❌ Permission request failed. Please try again.</h2>";
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                document.body.innerHTML = "<h2>❌ Failed to communicate with the bot.</h2>";
+            });
+        });
     </script>
 </head>
 <body>
-    <h1>🔄 Redirecting you to Telegram...</h1>
+    <h2>🔄 Please wait while we verify your access...</h2>
 </body>
 </html>
