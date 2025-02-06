@@ -30,3 +30,14 @@ def store_link():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
+    from flask import Flask, request, jsonify, render_template
+
+app = Flask(__name__)
+
+@app.route("/miniapp", methods=["GET"])
+def miniapp():
+    return render_template("miniapp.html")  # ✅ Serve the Mini App frontend
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
+
