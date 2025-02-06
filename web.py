@@ -1,4 +1,6 @@
 from flask import Flask, request, jsonify, render_template
+import jwt
+import datetime  # ✅ FIX: Import datetime module
 
 app = Flask(__name__)
 
@@ -25,10 +27,9 @@ def store_link():
     links[token] = private_link
     return jsonify({"short_link": short_link, "success": True}), 200
 
-# ✅ Serve the Mini App Frontend
 @app.route("/miniapp", methods=["GET"])
 def miniapp():
-    return jsonify({"message": "🚀 MiniApp Loaded Successfully! Please provide access to continue."}), 200
+    return render_template("miniapp.html")  # ✅ Serve the Mini App frontend
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
