@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect
+from flask import Flask, request, jsonify, redirect
 import jwt
 import datetime
 import logging
@@ -9,7 +9,7 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ✅ Secret key for encryption (Same as in Bot 1)
+# ✅ Secret key for encryption (Same as Bot 1)
 SECRET_KEY = "supersecret"
 
 # ✅ In-memory storage (Replace with a database)
@@ -42,7 +42,7 @@ def store_link():
 
     return jsonify({"short_link": short_link, "success": True}), 200
 
-# ✅ Mini App Page
+# ✅ Mini App Page (Redirect to Telegram)
 @app.route("/miniapp", methods=["GET"])
 def miniapp():
     token = request.args.get("start")
@@ -55,8 +55,8 @@ def miniapp():
         decoded_data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         channel_invite_link = decoded_data["link"]
 
-        # ✅ Redirect to the Telegram channel
-        return redirect(channel_invite_link)
+        # ✅ 🚀 Redirect user to Telegram invite link
+        return redirect(channel_invite_link, code=302)
     except jwt.ExpiredSignatureError:
         return "❌ Error: Link expired.", 403
     except jwt.InvalidTokenError:
