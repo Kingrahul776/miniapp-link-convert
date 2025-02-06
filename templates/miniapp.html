@@ -3,51 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Access Required</title>
-    <script>
-        // ✅ Function to extract `start` token from the URL
-        function getQueryParam(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-
-        // ✅ Main Execution
-        document.addEventListener("DOMContentLoaded", function () {
-            const token = getQueryParam("start");
-
-            if (!token) {
-                document.body.innerHTML = "<h2>❌ Invalid link. Please request a new one.</h2>";
-                return;
-            }
-
-            // ✅ Ask Telegram Bot 2 for permission
-            fetch(`https://api.telegram.org/bot7907835521:AAE6FP3yU-aoKYXXEX05kio4SV3j1IJACyc/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    chat_id: 6142725643,  // Replace with your admin chat ID or the user's chat ID
-                    text: `🔄 A user is requesting access. \n\nToken: ${token}`
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok) {
-                    // ✅ Redirect the user after 3 seconds to Bot 2 for permission
-                    setTimeout(() => {
-                        window.location.href = `https://t.me/vipsignals221bot?start=${token}`;
-                    }, 3000);
-                } else {
-                    document.body.innerHTML = "<h2>❌ Permission request failed. Please try again.</h2>";
-                }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                document.body.innerHTML = "<h2>❌ Failed to communicate with the bot.</h2>";
-            });
-        });
-    </script>
+    <title>Mini App Redirect</title>
 </head>
 <body>
-    <h2>🔄 Please wait while we verify your access...</h2>
+    <h2>Loading...</h2>
+    <script>
+        // Extract token from URL
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("start");
+
+        if (token) {
+            // Redirect to Bot 2
+            window.location.href = `https://t.me/vipsignals221bot?start=${token}`;
+        } else {
+            document.body.innerHTML = "<h3>Error: Invalid or missing token.</h3>";
+        }
+    </script>
 </body>
 </html>
