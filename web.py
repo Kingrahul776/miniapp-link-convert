@@ -22,7 +22,8 @@ def store_link():
 
     private_link = data.get("private_link")
     token = jwt.encode({"link": private_link}, SECRET_KEY, algorithm="HS256")
-    short_link = f"https://t.me/vipsignals221bot?start={token}"
+    short_link = short_link = f"https://www.kingcryptocalls.com/miniapp?start={token}"
+
 
     links[token] = private_link
     return jsonify({"short_link": short_link, "success": True}), 200
